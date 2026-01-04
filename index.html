@@ -7,6 +7,7 @@
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
 
+    <script src="https://rawgit.com/donmccurdy/aframe-extras/master/dist/aframe-extras.loaders.min.js"></script>
     <style>
       body {
         margin: 0;
@@ -95,32 +96,79 @@
     <a-scene
       id="ar-scene"
       embedded
-      arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
+      arjs="sourceType: webcam; 
+            debugUIEnabled: false; 
+            detectionMode: mono_and_matrix; 
+            matrixCodeType: 3x3;
+            trackingMethod: best;
+            maxDetectionRate: 60;
+            canvasWidth: 640;
+            canvasHeight: 480;"
+      vr-mode-ui="enabled: false"
       style="display: none;"
     >
       <a-assets>
-        <a-asset-item id="model1" src="model/01_baju_adat_dayak.glb"></a-asset-item>
-        <a-asset-item id="model2" src="model/01_mandau.glb"></a-asset-item>
-        <a-asset-item id="model3" src="model/01_tameng_dayak_shield.glb"></a-asset-item>
+        <!-- Set 01: Dayak -->
+        <a-asset-item id="Set_Dayak" src="model/Set_Dayak.glb"></a-asset-item>
+        
+        <!-- Set 02: Bugis -->
+        <a-asset-item id="Set_Bugis" src="model/Set_Bugis.glb"></a-asset-item>
+        
+        <!-- Set 03: Jogja -->
+        <a-asset-item id="Set_Jogja" src="model/Set_Jogja.glb"></a-asset-item>
       </a-assets>
 
-      <a-marker type="barcode" value="6">
+      <!-- Marker 0: Set Dayak (3 object) -->
+      <a-marker 
+        type="barcode" 
+        value="0"
+        smooth="true"
+        smoothCount="10"
+        smoothTolerance="0.01"
+        smoothThreshold="5"
+        size="1"
+      >
         <a-entity
-          gltf-model="#model1"
-          scale="1 1 1"
+          gltf-model="#Set_Dayak"
+          scale="0.4 0.4 0.4"
           position="0 0 0"
+          rotation="0 0 0"
         ></a-entity>
+      </a-marker>
 
+      <!-- Marker 1: Set Bugis -->
+      <a-marker 
+        type="barcode" 
+        value="1"
+        smooth="true"
+        smoothCount="10"
+        smoothTolerance="0.01"
+        smoothThreshold="5"
+        size="1"
+      >
         <a-entity
-          gltf-model="#model2"
-          scale="3 3 3"
-          position="1 0 0"
-        ></a-entity>
-
-        <a-entity
-          gltf-model="#model3"
+          gltf-model="#Set_Bugis"
           scale="0.2 0.2 0.2"
-          position="-1 0 0"
+          position="0 0 0"
+          rotation="0 -90 0"
+        ></a-entity>
+      </a-marker>
+
+      <!-- Marker 2: Set Jogja -->
+      <a-marker 
+        type="barcode" 
+        value="2"
+        smooth="true"
+        smoothCount="10"
+        smoothTolerance="0.01"
+        smoothThreshold="5"
+        size="1"
+      >
+        <a-entity
+          gltf-model="#Set_Jogja"
+          scale="0.5 0.5 0.5"
+          position="0 0 0"
+          rotation="0 0 0"
         ></a-entity>
       </a-marker>
 
@@ -128,13 +176,46 @@
     </a-scene>
 
     <script>
+      /**
+       * Auto-normalize model GLTF
+       * @param {THREE.Object3D} model - Model hasil load dari GLTFLoader
+       * @param {number} targetHeight - Tinggi target model dalam meter (default: 0.4)
+       * @returns {THREE.Object3D} Model yang sudah dinormalisasi
+       */
+      function normalizeModel(model, targetHeight = 0.4) 
+      {
+        // Hitung bounding box dari model
+        const box = new THREE.Box3().setFromObject(model);
+        const size = new THREE.Vector3();
+        box.getSize(size);
+
+        // Hitung scale factor berdasarkan tinggi target
+        const currentHeight = size.y;
+        const scaleFactor = targetHeight / currentHeight;
+
+        // Apply scale proporsional ke semua axis
+        model.scale.set(scaleFactor, scaleFactor, scaleFactor);
+
+        // Hitung ulang bounding box setelah scaling
+        box.setFromObject(model);
+        
+        // Pindahkan model agar alas menyentuh Y=0
+        // Model akan berdiri tepat di atas marker
+        model.position.y = -box.min.y;
+
+        return model;
+      }
+
       // Preload models dan tampilkan progress
       function preloadModels() 
       {
         const models = [
-          'model/01_baju_adat_dayak.glb',
-          'model/01_mandau.glb',
-          'model/01_tameng_dayak_shield.glb'
+          // Set 01: Dayak
+          'model/Set_Dayak.glb',
+          // Set 02: Bugis
+          'model/Set_Bugis.glb',
+          // Set 03: Jogja,
+          'model/Set_Jogja.glb'
         ];
 
         let loadedCount = 0;
@@ -146,22 +227,38 @@
           const progress = Math.round((loadedCount / totalModels) * 100);
           document.getElementById('progress-fill').style.width = progress + '%';
           document.getElementById('progress-text').textContent = progress;
-
-          if (loadedCount === totalModels) {
-            showARScene();
-          }
         }
 
-        // Load setiap model
-        models.forEach((modelPath) => 
+        // Load semua model secara paralel dengan Promise.all
+        const loader = new THREE.GLTFLoader();
+        const loadPromises = models.map((modelPath) => 
         {
-          const loader = new THREE.GLTFLoader();
-          loader.load(modelPath, updateProgress, undefined, (error) => 
+          return new Promise((resolve, reject) => 
           {
-            console.error('Error loading model:', modelPath, error);
-            updateProgress(); // Tetap lanjut walaupun ada error
+            loader.load(
+              modelPath,
+              (gltf) => 
+              {
+                // Auto-normalize model setelah di-load
+                normalizeModel(gltf.scene, 0.4);
+                updateProgress();
+                resolve(gltf);
+              },
+              undefined,
+              (error) => 
+              {
+                console.error('Error loading model:', modelPath, error);
+                updateProgress(); // Tetap update progress meskipun error
+                resolve(null); // Resolve dengan null agar tidak memblokir loading lainnya
+              }
+            );
           });
         });
+
+        // Tunggu semua model selesai di-load
+        Promise
+          .all(loadPromises)
+          .then(() => { showARScene(); });
       }
 
       function showARScene() 
