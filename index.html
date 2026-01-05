@@ -1,277 +1,148 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <title>Lokantara AR</title>
+<head>
+  <meta charset="utf-8" />
+  <title>Lokantara AR</title>
 
-    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
+  <script src="https://rawgit.com/donmccurdy/aframe-extras/master/dist/aframe-extras.loaders.min.js"></script>
 
-    <script src="https://rawgit.com/donmccurdy/aframe-extras/master/dist/aframe-extras.loaders.min.js"></script>
-    <style>
-      body {
-        margin: 0;
-        overflow: hidden;
-      }
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
 
-      #loading-screen {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-        font-family: Arial, sans-serif;
-      }
+    #loading-screen {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
 
-      .loading-content {
-        text-align: center;
-        color: white;
-      }
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid rgba(255,255,255,.3);
+      border-top: 4px solid #fff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
 
-      .spinner {
-        border: 4px solid rgba(255, 255, 255, 0.3);
-        border-top: 4px solid white;
-        border-radius: 50%;
-        width: 50px;
-        height: 50px;
-        animation: spin 1s linear infinite;
-        margin: 0 auto 20px;
-      }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
 
-      @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-      }
+<body>
 
-      .loading-text {
-        font-size: 18px;
-        margin-bottom: 15px;
-        font-weight: bold;
-      }
+<div id="loading-screen">
+  <div>
+    <div class="spinner"></div>
+    <div>Mempersiapkan AR...</div>
+  </div>
+</div>
 
-      .progress-bar {
-        width: 200px;
-        height: 8px;
-        background: rgba(255, 255, 255, 0.3);
-        border-radius: 4px;
-        overflow: hidden;
-        margin: 20px auto 0;
-      }
+<a-scene
+  embedded
+  arjs="sourceType: webcam; debugUIEnabled: false;"
+  vr-mode-ui="enabled: false"
+  style="display:none;"
+  id="ar-scene"
+>
 
-      .progress-fill {
-        height: 100%;
-        background: white;
-        width: 0%;
-        transition: width 0.3s ease;
-      }
+  <!-- ================= ASSETS ================= -->
+  <a-assets>
+    <!-- DAYAK -->
+    <a-asset-item id="dayak_baju" src="model/01_baju_adat_dayak.glb"></a-asset-item>
+    <a-asset-item id="dayak_mandau" src="model/01_mandau.glb"></a-asset-item>
+    <a-asset-item id="dayak_tameng" src="model/01_tameng_dayak_shield.glb"></a-asset-item>
 
-      .progress-text {
-        font-size: 14px;
-        margin-top: 10px;
-        opacity: 0.9;
-      }
-    </style>
-  </head>
+    <!-- BUGIS -->
+    <a-asset-item id="bugis_badik" src="model/02_badik.glb"></a-asset-item>
+    <a-asset-item id="bugis_rumah" src="model/02_rumah_adat_bugis.glb"></a-asset-item>
 
-  <body>
-    <!-- Loading Screen -->
-    <div id="loading-screen">
-      <div class="loading-content">
-        <div class="spinner"></div>
-        <div class="loading-text">Mempersiapkan AR...</div>
-        <div class="progress-bar">
-          <div class="progress-fill" id="progress-fill"></div>
-        </div>
-        <div class="progress-text"><span id="progress-text">0</span>%</div>
-      </div>
-    </div>
+    <!-- YOGYAKARTA -->
+    <a-asset-item id="jogja_benteng" src="model/03_benteng_vandeburg_3d.glb"></a-asset-item>
+    <a-asset-item id="jogja_gunungan" src="model/03_gunungan_wayang.glb"></a-asset-item>
+    <a-asset-item id="jogja_jogja" src="model/03_jogja_3d.glb"></a-asset-item>
+    <a-asset-item id="jogja_tugu" src="model/03_tugu_jogja.glb"></a-asset-item>
+  </a-assets>
 
-    <!-- AR Scene -->
-    <a-scene
-      id="ar-scene"
-      embedded
-      arjs="sourceType: webcam; 
-            debugUIEnabled: false; 
-            detectionMode: mono_and_matrix; 
-            matrixCodeType: 3x3;
-            trackingMethod: best;
-            maxDetectionRate: 60;
-            canvasWidth: 640;
-            canvasHeight: 480;"
-      vr-mode-ui="enabled: false"
-      style="display: none;"
-    >
-      <a-assets>
-        <!-- Set 01: Dayak -->
-        <a-asset-item id="Set_Dayak" src="model/Set_Dayak.glb"></a-asset-item>
-        
-        <!-- Set 02: Bugis -->
-        <a-asset-item id="Set_Bugis" src="model/Set_Bugis.glb"></a-asset-item>
-        
-        <!-- Set 03: Jogja -->
-        <a-asset-item id="Set_Jogja" src="model/Set_Jogja.glb"></a-asset-item>
-      </a-assets>
+  <!-- ================= MARKER 0 : DAYAK ================= -->
+  <a-marker type="barcode" value="0" smooth="true">
 
-      <!-- Marker 0: Set Dayak (3 object) -->
-      <a-marker 
-        type="barcode" 
-        value="0"
-        smooth="true"
-        smoothCount="10"
-        smoothTolerance="0.01"
-        smoothThreshold="5"
-        size="1"
-      >
-        <a-entity
-          gltf-model="#Set_Dayak"
-          scale="0.4 0.4 0.4"
-          position="0 0 0"
-          rotation="0 0 0"
-        ></a-entity>
-      </a-marker>
+    <a-entity gltf-model="#dayak_baju"
+      position="0 0 0"
+      scale="0.4 0.4 0.4">
+    </a-entity>
 
-      <!-- Marker 1: Set Bugis -->
-      <a-marker 
-        type="barcode" 
-        value="1"
-        smooth="true"
-        smoothCount="10"
-        smoothTolerance="0.01"
-        smoothThreshold="5"
-        size="1"
-      >
-        <a-entity
-          gltf-model="#Set_Bugis"
-          scale="0.2 0.2 0.2"
-          position="0 0 0"
-          rotation="0 -90 0"
-        ></a-entity>
-      </a-marker>
+    <a-entity gltf-model="#dayak_mandau"
+      position="0.6 0 0"
+      scale="0.25 0.25 0.25"
+      rotation="0 90 0">
+    </a-entity>
 
-      <!-- Marker 2: Set Jogja -->
-      <a-marker 
-        type="barcode" 
-        value="2"
-        smooth="true"
-        smoothCount="10"
-        smoothTolerance="0.01"
-        smoothThreshold="5"
-        size="1"
-      >
-        <a-entity
-          gltf-model="#Set_Jogja"
-          scale="0.5 0.5 0.5"
-          position="0 0 0"
-          rotation="0 0 0"
-        ></a-entity>
-      </a-marker>
+    <a-entity gltf-model="#dayak_tameng"
+      position="-0.6 0 0"
+      scale="0.3 0.3 0.3">
+    </a-entity>
 
-      <a-entity camera></a-entity>
-    </a-scene>
+  </a-marker>
 
-    <script>
-      /**
-       * Auto-normalize model GLTF
-       * @param {THREE.Object3D} model - Model hasil load dari GLTFLoader
-       * @param {number} targetHeight - Tinggi target model dalam meter (default: 0.4)
-       * @returns {THREE.Object3D} Model yang sudah dinormalisasi
-       */
-      function normalizeModel(model, targetHeight = 0.4) 
-      {
-        // Hitung bounding box dari model
-        const box = new THREE.Box3().setFromObject(model);
-        const size = new THREE.Vector3();
-        box.getSize(size);
+  <!-- ================= MARKER 1 : BUGIS ================= -->
+  <a-marker type="barcode" value="1" smooth="true">
 
-        // Hitung scale factor berdasarkan tinggi target
-        const currentHeight = size.y;
-        const scaleFactor = targetHeight / currentHeight;
+    <a-entity gltf-model="#bugis_rumah"
+      position="0 0 0"
+      scale="0.2 0.2 0.2">
+    </a-entity>
 
-        // Apply scale proporsional ke semua axis
-        model.scale.set(scaleFactor, scaleFactor, scaleFactor);
+    <a-entity gltf-model="#bugis_badik"
+      position="0.7 0 0"
+      scale="0.15 0.15 0.15"
+      rotation="0 90 0">
+    </a-entity>
 
-        // Hitung ulang bounding box setelah scaling
-        box.setFromObject(model);
-        
-        // Pindahkan model agar alas menyentuh Y=0
-        // Model akan berdiri tepat di atas marker
-        model.position.y = -box.min.y;
+  </a-marker>
 
-        return model;
-      }
+  <!-- ================= MARKER 2 : YOGYAKARTA ================= -->
+  <a-marker type="barcode" value="2" smooth="true">
 
-      // Preload models dan tampilkan progress
-      function preloadModels() 
-      {
-        const models = [
-          // Set 01: Dayak
-          'model/Set_Dayak.glb',
-          // Set 02: Bugis
-          'model/Set_Bugis.glb',
-          // Set 03: Jogja,
-          'model/Set_Jogja.glb'
-        ];
+    <a-entity gltf-model="#jogja_tugu"
+      position="0 0 0"
+      scale="0.35 0.35 0.35">
+    </a-entity>
 
-        let loadedCount = 0;
-        const totalModels = models.length;
+    <a-entity gltf-model="#jogja_benteng"
+      position="1 0 0"
+      scale="0.15 0.15 0.15">
+    </a-entity>
 
-        function updateProgress() 
-        {
-          loadedCount++;
-          const progress = Math.round((loadedCount / totalModels) * 100);
-          document.getElementById('progress-fill').style.width = progress + '%';
-          document.getElementById('progress-text').textContent = progress;
-        }
+    <a-entity gltf-model="#jogja_gunungan"
+      position="-1 0 0"
+      scale="0.25 0.25 0.25">
+    </a-entity>
 
-        // Load semua model secara paralel dengan Promise.all
-        const loader = new THREE.GLTFLoader();
-        const loadPromises = models.map((modelPath) => 
-        {
-          return new Promise((resolve, reject) => 
-          {
-            loader.load(
-              modelPath,
-              (gltf) => 
-              {
-                // Auto-normalize model setelah di-load
-                normalizeModel(gltf.scene, 0.4);
-                updateProgress();
-                resolve(gltf);
-              },
-              undefined,
-              (error) => 
-              {
-                console.error('Error loading model:', modelPath, error);
-                updateProgress(); // Tetap update progress meskipun error
-                resolve(null); // Resolve dengan null agar tidak memblokir loading lainnya
-              }
-            );
-          });
-        });
+  </a-marker>
 
-        // Tunggu semua model selesai di-load
-        Promise
-          .all(loadPromises)
-          .then(() => { showARScene(); });
-      }
+  <a-entity camera></a-entity>
+</a-scene>
 
-      function showARScene() 
-      {
-        // Sembunyikan loading screen
-        document.getElementById('loading-screen').style.display = 'none';
-        
-        // Tampilkan AR scene
-        document.getElementById('ar-scene').style.display = 'block';
-      }
+<script>
+  window.addEventListener("load", () => {
+    document.getElementById("loading-screen").style.display = "none";
+    document.getElementById("ar-scene").style.display = "block";
+  });
+</script>
 
-      // Mulai preload saat halaman selesai dimuat
-      window.addEventListener('load', () => preloadModels());
-    </script>
-  </body>
+</body>
 </html>
