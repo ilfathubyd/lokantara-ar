@@ -387,6 +387,36 @@
 
       // Mulai preload saat halaman selesai dimuat
       window.addEventListener("load", () => preloadModels());
+
+      const card = document.getElementById("info-card");
+      const title = document.getElementById("info-title");
+      const content = document.getElementById("info-content");
+      const closeBtn = document.getElementById("close-card");
+
+      function showCard(t, c) {
+        title.textContent = t;
+        content.textContent = c;
+        card.classList.remove("hidden");
+      }
+
+      closeBtn.addEventListener("click", () => {
+        card.classList.add("hidden");
+      });
+
+      AFRAME.registerComponent("click-handler", {
+        init: function () {
+          this.el.addEventListener("click", () => {
+            const t = this.el.getAttribute("data-title");
+            const c = this.el.getAttribute("data-info");
+            if (t && c) showCard(t, c);
+          });
+        },
+      });
+
+      // Apply to all clickable entities
+      document.querySelectorAll(".clickable").forEach((el) => {
+        el.setAttribute("click-handler", "");
+      });
     </script>
   </body>
 </html>
