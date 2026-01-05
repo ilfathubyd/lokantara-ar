@@ -1,86 +1,35 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
   <head>
     <meta charset="utf-8" />
     <title>Lokantara AR</title>
 
+    <!-- A-Frame & AR.js -->
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/loaders/GLTFLoader.js"></script>
 
-    <script src="https://rawgit.com/donmccurdy/aframe-extras/master/dist/aframe-extras.loaders.min.js"></script>
     <style>
       body {
         margin: 0;
         overflow: hidden;
-      }
-
-      #loading-screen {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
         font-family: Arial, sans-serif;
       }
 
-      .loading-content {
-        text-align: center;
+      /* ===== LOADING ===== */
+      #loading-screen {
+        position: fixed;
+        inset: 0;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        display: flex;
+        justify-content: center;
+        align-items: center;
         color: white;
+        z-index: 9999;
+        flex-direction: column;
       }
 
-      .spinner {
-        border: 4px solid rgba(255, 255, 255, 0.3);
-        border-top: 4px solid white;
-        border-radius: 50%;
-        width: 50px;
-        height: 50px;
-        animation: spin 1s linear infinite;
-        margin: 0 auto 20px;
-      }
-
-      @keyframes spin {
-        0% {
-          transform: rotate(0deg);
-        }
-        100% {
-          transform: rotate(360deg);
-        }
-      }
-
-      .loading-text {
-        font-size: 18px;
-        margin-bottom: 15px;
-        font-weight: bold;
-      }
-
-      .progress-bar {
-        width: 200px;
-        height: 8px;
-        background: rgba(255, 255, 255, 0.3);
-        border-radius: 4px;
-        overflow: hidden;
-        margin: 20px auto 0;
-      }
-
-      .progress-fill {
-        height: 100%;
-        background: white;
-        width: 0%;
-        transition: width 0.3s ease;
-      }
-
-      .progress-text {
-        font-size: 14px;
-        margin-top: 10px;
-        opacity: 0.9;
-      }
-
+      /* ===== INFO CARD ===== */
       .info-card {
         position: fixed;
         bottom: 20px;
@@ -88,10 +37,9 @@
         transform: translateX(-50%);
         width: 90%;
         max-width: 360px;
-        background: rgba(255, 255, 255, 0.95);
+        background: rgba(255, 255, 255, 0.96);
         border-radius: 14px;
-        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
-        font-family: Arial, sans-serif;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
         z-index: 10000;
         animation: slideUp 0.3s ease;
       }
@@ -103,7 +51,6 @@
       .info-header {
         display: flex;
         justify-content: space-between;
-        align-items: center;
         padding: 14px 16px;
         font-weight: bold;
         border-bottom: 1px solid #eee;
@@ -119,7 +66,7 @@
       .info-body {
         padding: 14px 16px;
         font-size: 14px;
-        line-height: 1.5;
+        line-height: 1.6;
         color: #333;
       }
 
@@ -136,287 +83,136 @@
     </style>
   </head>
 
-  <!-- Info Card Overlay -->
-  <div id="info-card" class="info-card hidden">
-    <div class="info-header">
-      <span id="info-title">Judul</span>
-      <button id="close-card">✕</button>
-    </div>
-    <div class="info-body" id="info-content">Konten</div>
-  </div>
-
   <body>
-    <!-- Loading Screen -->
-    <div id="loading-screen">
-      <div class="loading-content">
-        <div class="spinner"></div>
-        <div class="loading-text">Mempersiapkan AR...</div>
-        <div class="progress-bar">
-          <div class="progress-fill" id="progress-fill"></div>
-        </div>
-        <div class="progress-text"><span id="progress-text">0</span>%</div>
+    <!-- ===== INFO CARD ===== -->
+    <div id="info-card" class="info-card hidden">
+      <div class="info-header">
+        <span id="info-title"></span>
+        <button id="close-card">✕</button>
       </div>
+      <div class="info-body" id="info-content"></div>
     </div>
 
-    <!-- AR Scene -->
+    <!-- ===== LOADING ===== -->
+    <div id="loading-screen">Mempersiapkan AR…</div>
+
+    <!-- ===== AR SCENE ===== -->
     <a-scene
-      id="ar-scene"
       embedded
-      arjs="sourceType: webcam; 
-            debugUIEnabled: false; 
-            detectionMode: mono_and_matrix; 
-            matrixCodeType: 3x3;
-            trackingMethod: best;
-            maxDetectionRate: 60;
-            canvasWidth: 640;
-            canvasHeight: 480;"
+      arjs="sourceType: webcam; debugUIEnabled: false;"
       vr-mode-ui="enabled: false"
-      style="display: none"
+      style="display:none"
+      id="ar-scene"
     >
       <a-assets>
-        <!-- Set 01: Dayak -->
-        <a-asset-item id="Set_Dayak" src="model/Set_Dayak.glb"></a-asset-item>
-
-        <!-- Set 02: Bugis -->
-        <a-asset-item id="Set_Bugis" src="model/Set_Bugis.glb"></a-asset-item>
-
-        <!-- Set 03: Jogja -->
-        <a-asset-item id="Set_Jogja" src="model/Set_Jogja.glb"></a-asset-item>
+        <a-asset-item id="dayak" src="model/Set_Dayak.glb"></a-asset-item>
+        <a-asset-item id="bugis" src="model/Set_Bugis.glb"></a-asset-item>
+        <a-asset-item id="jogja" src="model/Set_Jogja.glb"></a-asset-item>
       </a-assets>
 
-      <!-- Marker 0: Set Dayak (3 object) -->
-      <a-marker
-        type="barcode"
-        value="0"
-        smooth="true"
-        smoothCount="10"
-        smoothTolerance="0.01"
-        smoothThreshold="5"
-        size="1"
-      >
+      <!-- ===== MARKER DAYAK ===== -->
+      <a-marker type="barcode" value="0">
         <a-entity
-          gltf-model="#Set_Dayak"
+          gltf-model="#dayak"
           scale="0.4 0.4 0.4"
-          position="0 0 0"
-          rotation="0 0 0"
           class="clickable"
           data-title="Budaya Dayak"
-          data-info="Objek ini menampilkan baju adat, mandau, dan tameng khas Suku Dayak yang melambangkan keberanian dan identitas budaya."
+          data-info="Budaya Dayak melambangkan keberanian, kearifan lokal, serta nilai spiritual yang kuat melalui mandau, tameng, dan pakaian adat."
         ></a-entity>
 
-        <!-- Icon Info -->
+        <!-- ICON INFO -->
         <a-entity
-          geometry="primitive: circle; radius: 0.05"
-          material="color: white; opacity: 0.9"
-          position="0 0.6 0"
-          class="info-icon clickable"
+          class="clickable"
+          data-title="Budaya Dayak"
+          data-info="Budaya Dayak melambangkan keberanian dan identitas masyarakat Kalimantan."
+          geometry="primitive: circle; radius: 0.06"
+          material="color: #2979FF; opacity: 0.95"
+          position="0 0.65 0"
+          animation="property: scale; from:1 1 1; to:1.25 1.25 1.25; dir:alternate; loop:true; dur:900"
         ></a-entity>
 
         <a-text
           value="i"
+          color="white"
           align="center"
-          color="#333"
-          position="0 0.6 0.01"
-          scale="0.5 0.5 0.5"
+          position="0 0.65 0.01"
+          scale="0.6 0.6 0.6"
         ></a-text>
       </a-marker>
 
-      <!-- Marker 1: Set Bugis -->
-      <a-marker
-        type="barcode"
-        value="1"
-        smooth="true"
-        smoothCount="10"
-        smoothTolerance="0.01"
-        smoothThreshold="5"
-        size="1"
-      >
+      <!-- ===== MARKER BUGIS ===== -->
+      <a-marker type="barcode" value="1">
         <a-entity
-          gltf-model="#Set_Bugis"
-          scale="0.2 0.2 0.2"
-          position="0 0 0"
+          gltf-model="#bugis"
+          scale="0.25 0.25 0.25"
           rotation="0 -90 0"
           class="clickable"
           data-title="Budaya Bugis"
-          data-info="Objek bugis | hello world"
+          data-info="Budaya Bugis dikenal dengan nilai siri’, keberanian, dan rumah adat yang mencerminkan struktur sosial masyarakat."
         ></a-entity>
       </a-marker>
 
-      <!-- Icon Info -->
-      <a-entity
-        geometry="primitive: circle; radius: 0.05"
-        material="color: white; opacity: 0.9"
-        position="0 0.6 0"
-        class="info-icon clickable"
-      ></a-entity>
-
-      <a-text
-        value="i"
-        align="center"
-        color="#333"
-        position="0 0.6 0.01"
-        scale="0.5 0.5 0.5"
-      ></a-text>
-
-      <!-- Marker 2: Set Jogja -->
-      <a-marker
-        type="barcode"
-        value="2"
-        smooth="true"
-        smoothCount="10"
-        smoothTolerance="0.01"
-        smoothThreshold="5"
-        size="1"
-      >
+      <!-- ===== MARKER JOGJA ===== -->
+      <a-marker type="barcode" value="2">
         <a-entity
-          gltf-model="#Set_Jogja"
+          gltf-model="#jogja"
           scale="0.5 0.5 0.5"
-          position="0 0 0"
-          rotation="0 0 0"
           class="clickable"
-          data-title="Budaya Dayak"
-          data-info="Objek ini menampilkan baju adat, mandau, dan tameng khas Suku Dayak yang melambangkan keberanian dan identitas budaya."
+          data-title="Budaya Yogyakarta"
+          data-info="Budaya Yogyakarta identik dengan nilai kesopanan, filosofi hidup Jawa, dan arsitektur keraton."
         ></a-entity>
-
-        <!-- Icon Info -->
-        <a-entity
-          geometry="primitive: circle; radius: 0.05"
-          material="color: white; opacity: 0.9"
-          position="0 0.6 0"
-          class="info-icon clickable"
-        ></a-entity>
-
-        <a-text
-          value="i"
-          align="center"
-          color="#333"
-          position="0 0.6 0.01"
-          scale="0.5 0.5 0.5"
-        ></a-text>
       </a-marker>
 
-      <a-entity camera></a-entity>
+      <!-- CAMERA + CLICK SUPPORT -->
+      <a-entity
+        camera
+        cursor="rayOrigin: mouse"
+        raycaster="objects: .clickable"
+      ></a-entity>
     </a-scene>
 
+    <!-- ===== SCRIPT ===== -->
     <script>
-      /**
-       * Auto-normalize model GLTF
-       * @param {THREE.Object3D} model - Model hasil load dari GLTFLoader
-       * @param {number} targetHeight - Tinggi target model dalam meter (default: 0.4)
-       * @returns {THREE.Object3D} Model yang sudah dinormalisasi
-       */
-      function normalizeModel(model, targetHeight = 0.4) {
-        // Hitung bounding box dari model
-        const box = new THREE.Box3().setFromObject(model);
-        const size = new THREE.Vector3();
-        box.getSize(size);
-
-        // Hitung scale factor berdasarkan tinggi target
-        const currentHeight = size.y;
-        const scaleFactor = targetHeight / currentHeight;
-
-        // Apply scale proporsional ke semua axis
-        model.scale.set(scaleFactor, scaleFactor, scaleFactor);
-
-        // Hitung ulang bounding box setelah scaling
-        box.setFromObject(model);
-
-        // Pindahkan model agar alas menyentuh Y=0
-        // Model akan berdiri tepat di atas marker
-        model.position.y = -box.min.y;
-
-        return model;
-      }
-
-      // Preload models dan tampilkan progress
-      function preloadModels() {
-        const models = [
-          // Set 01: Dayak
-          "model/Set_Dayak.glb",
-          // Set 02: Bugis
-          "model/Set_Bugis.glb",
-          // Set 03: Jogja,
-          "model/Set_Jogja.glb",
-        ];
-
-        let loadedCount = 0;
-        const totalModels = models.length;
-
-        function updateProgress() {
-          loadedCount++;
-          const progress = Math.round((loadedCount / totalModels) * 100);
-          document.getElementById("progress-fill").style.width = progress + "%";
-          document.getElementById("progress-text").textContent = progress;
-        }
-
-        // Load semua model secara paralel dengan Promise.all
-        const loader = new THREE.GLTFLoader();
-        const loadPromises = models.map((modelPath) => {
-          return new Promise((resolve, reject) => {
-            loader.load(
-              modelPath,
-              (gltf) => {
-                // Auto-normalize model setelah di-load
-                normalizeModel(gltf.scene, 0.4);
-                updateProgress();
-                resolve(gltf);
-              },
-              undefined,
-              (error) => {
-                console.error("Error loading model:", modelPath, error);
-                updateProgress(); // Tetap update progress meskipun error
-                resolve(null); // Resolve dengan null agar tidak memblokir loading lainnya
-              }
-            );
-          });
-        });
-
-        // Tunggu semua model selesai di-load
-        Promise.all(loadPromises).then(() => {
-          showARScene();
-        });
-      }
-
-      function showARScene() {
-        // Sembunyikan loading screen
-        document.getElementById("loading-screen").style.display = "none";
-
-        // Tampilkan AR scene
-        document.getElementById("ar-scene").style.display = "block";
-      }
-
-      // Mulai preload saat halaman selesai dimuat
-      window.addEventListener("load", () => preloadModels());
-
       const card = document.getElementById("info-card");
-      const title = document.getElementById("info-title");
-      const content = document.getElementById("info-content");
+      const titleEl = document.getElementById("info-title");
+      const contentEl = document.getElementById("info-content");
       const closeBtn = document.getElementById("close-card");
 
-      function showCard(t, c) {
-        title.textContent = t;
-        content.textContent = c;
+      function showCard(title, content) {
+        titleEl.textContent = title;
+        contentEl.textContent = content;
         card.classList.remove("hidden");
       }
 
-      closeBtn.addEventListener("click", () => {
-        card.classList.add("hidden");
-      });
+      closeBtn.onclick = () => card.classList.add("hidden");
 
       AFRAME.registerComponent("click-handler", {
-        init: function () {
-          this.el.addEventListener("click", () => {
+        init() {
+          this.el.addEventListener("click", e => {
+            e.stopPropagation();
             const t = this.el.getAttribute("data-title");
             const c = this.el.getAttribute("data-info");
             if (t && c) showCard(t, c);
           });
-        },
+        }
       });
 
-      // Apply to all clickable entities
-      document.querySelectorAll(".clickable").forEach((el) => {
+      document.querySelectorAll(".clickable").forEach(el => {
         el.setAttribute("click-handler", "");
       });
+
+      // AUTO CLOSE SAAT MARKER HILANG
+      document.querySelectorAll("a-marker").forEach(marker => {
+        marker.addEventListener("markerLost", () => {
+          card.classList.add("hidden");
+        });
+      });
+
+      // SHOW SCENE
+      window.onload = () => {
+        document.getElementById("loading-screen").style.display = "none";
+        document.getElementById("ar-scene").style.display = "block";
+      };
     </script>
   </body>
 </html>
